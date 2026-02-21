@@ -218,17 +218,6 @@ def create_custom_scenario() -> State:
     
     return state
 ```
-
-### Adding New Algorithms
-
-Implement the search interface:
-```python
-class CustomSearch:
-    def search(self, state: State) -> Tuple[List[Action], State, dict]:
-        # Implement search logic
-        return actions, final_state, stats
-```
-
 ## Future Enhancements
 
 - [ ] Multi-agent coordination
@@ -240,23 +229,7 @@ class CustomSearch:
 - [ ] 3D visualization
 - [ ] Network integration
 
-## References
 
-### Search Algorithms
-- Russell, S., & Norvig, P. (2020). *Artificial Intelligence: A Modern Approach*
-- Hart, P. E., Nilsson, N. J., & Raphael, B. (1968). "A Formal Basis for the Heuristic Determination of Minimum Cost Paths"
-
-### Game Theory
-- Von Neumann, J., & Morgenstern, O. (1944). *Theory of Games and Economic Behavior*
-- Knuth, D. E., & Moore, R. W. (1975). "An Analysis of Alpha-Beta Pruning"
-
-### Constraint Satisfaction
-- Dechter, R. (2003). *Constraint Processing*
-- Mackworth, A. K. (1977). "Consistency in Networks of Relations"
-
-## License
-
-MIT License - see LICENSE file for details
 
 ## Authors
 
