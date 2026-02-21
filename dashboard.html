@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD-ADSS | TACTICAL COMMAND INTERFACE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #00ff41;
+            --secondary-cyan: #00d4ff;
+            --warning-amber: #ffaa00;
+            --danger-red: #ff0033;
+            --grid-color: rgba(0, 255, 65, 0.15);
+            --panel-bg: rgba(0, 0, 0, 0.85);
+            --panel-border: rgba(0, 255, 65, 0.3);
+            --glow-green: rgba(0, 255, 65, 0.5);
+            --glow-cyan: rgba(0, 212, 255, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #000;
+            color: var(--primary-green);
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        /* Animated grid background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridScroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+
+        /* Scanline effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 255, 65, 0.02) 50%
+            );
+            background-size: 100% 4px;
+            animation: scanlineMove 8s linear infinite;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes scanlineMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+
+        .container {
+            position: relative;
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        /* Top Header */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-left: 6px solid var(--primary-green);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px var(--glow-green);
+        }
+
+        .top-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+            animation: sweep 3s infinite;
+        }
+
+        @keyframes sweep {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+
+        .title-section h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.8em;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px var(--glow-green), 0 0 40px var(--glow-green);
+            margin-bottom: 5px;
+            animation: glitch 5s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 96%, 100% { text-shadow: 0 0 20px var(--glow-green); }
+            97% { 
+                text-shadow: 2px 0 var(--secondary-cyan), -2px 0 var(--danger-red);
+                transform: translate(-2px, 0);
+            }
+            98% { 
+                text-shadow: -2px 0 var(--secondary-cyan), 2px 0 var(--danger-red);
+                transform: translate(2px, 0);
+            }
+        }
+
+        .subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--secondary-cyan);
+            font-size: 0.9em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--panel-border);
+            padding: 10px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .status-label {
+            font-size: 0.7em;
+            color: var(--secondary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .status-value.active {
+            color: var(--primary-green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Main Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            padding: 20px;
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0, 255, 65, 0.05);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--primary-green), 
+                transparent
+            );
+            animation: borderGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2em;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--secondary-cyan);
+        }
+
+        .panel-code {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8em;
+            color: var(--primary-green);
+            opacity: 0.7;
+        }
+
+        /* Tactical Map */
+        .tactical-map {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(0, 100, 0, 0.2) 0%, 
+                rgba(0, 0, 0, 0.9) 100%
+            );
+            border: 2px solid var(--primary-green);
+            box-shadow: inset 0 0 100px rgba(0, 255, 65, 0.2);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px var(--glow-green));
+        }
+
+        /* Radar rings */
+        .radar-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .radar-overlay::before,
+        .radar-overlay::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 50%;
+        }
+
+        .radar-overlay::before {
+            width: 66%;
+            height: 66%;
+        }
+
+        .radar-overlay::after {
+            width: 33%;
+            height: 33%;
+        }
+
+        /* Threat matrix */
+        .threat-matrix {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .threat-item {
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 4px solid var(--danger-red);
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .threat-item:hover {
+            background: rgba(255, 0, 51, 0.1);
+            border-left-width: 8px;
+            transform: translateX(5px);
+        }
+
+        .threat-level {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8em;
+            color: var(--danger-red);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .threat-desc {
+            font-size: 1.1em;
+            color: #fff;
+        }
+
+        .threat-distance {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9em;
+            color: var(--warning-amber);
+            margin-top: 5px;
+        }
+
+        /* Unit status */
+        .unit-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .unit-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--panel-border);
+            border-left: 4px solid var(--primary-green);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .unit-card:hover {
+            background: rgba(0, 255, 65, 0.1);
+            transform: translateX(5px);
+            box-shadow: 0 0 20px var(--glow-green);
+        }
+
+        .unit-info h4 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1em;
+            color: var(--primary-green);
+            margin-bottom: 5px;
+        }
+
+        .unit-stats {
+            display: flex;
+            gap: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85em;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .stat-icon.health { background: #00ff41; }
+        .stat-icon.fuel { background: #ffaa00; }
+        .stat-icon.ammo { background: #00d4ff; }
+
+        /* Scenario selector */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .scenario-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--panel-border);
+            color: var(--primary-green);
+            padding: 15px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: crosshair;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .scenario-btn:hover::before {
+            left: 100%;
+        }
+
+        .scenario-btn:hover {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 20px var(--glow-green), inset 0 0 20px rgba(0, 255, 65, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .scenario-btn.active {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: var(--primary-green);
+            box-shadow: 0 0 30px var(--glow-green);
+        }
+
+        /* Analyze button */
+        .analyze-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 65, 0.2) 0%, 
+                rgba(0, 212, 255, 0.2) 100%
+            );
+            border: 3px solid var(--primary-green);
+            color: var(--primary-green);
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            cursor: crosshair;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .analyze-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(0, 255, 65, 0.5) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .analyze-btn:hover::before {
+            width: 300%;
+            height: 300%;
+        }
+
+        .analyze-btn:hover {
+            box-shadow: 0 0 40px var(--glow-green), inset 0 0 40px rgba(0, 255, 65, 0.2);
+            transform: scale(1.02);
+        }
+
+        .analyze-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Recommendations */
+        .recommendations {
+            grid-column: 1 / -1;
+        }
+
+        .rec-card {
+            background: linear-gradient(135deg, 
+                rgba(0, 0, 0, 0.95) 0%, 
+                rgba(0, 50, 0, 0.95) 100%
+            );
+            border: 2px solid var(--panel-border);
+            border-left: 6px solid var(--secondary-cyan);
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .rec-card:hover {
+            border-left-width: 12px;
+            transform: translateX(10px);
+            box-shadow: 0 0 40px var(--glow-cyan);
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .rec-rank {
+            background: var(--secondary-cyan);
+            color: #000;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8em;
+            font-weight: 900;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        }
+
+        .rec-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.6em;
+            font-weight: 600;
+            color: var(--secondary-cyan);
+            flex-grow: 1;
+            margin-left: 20px;
+            letter-spacing: 2px;
+        }
+
+        .rec-utility {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.4em;
+            color: var(--primary-green);
+            padding: 8px 20px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--primary-green);
+        }
+
+        .rec-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .meta-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85em;
+            padding: 5px 12px;
+            border: 1px solid;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .meta-badge.algorithm {
+            border-color: var(--secondary-cyan);
+            color: var(--secondary-cyan);
+        }
+
+        .meta-badge.risk-low {
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+        .meta-badge.risk-medium {
+            border-color: var(--warning-amber);
+            color: var(--warning-amber);
+        }
+
+        .meta-badge.risk-high {
+            border-color: var(--danger-red);
+            color: var(--danger-red);
+        }
+
+        .actions-list {
+            background: rgba(0, 0, 0, 0.5);
+            border-left: 3px solid var(--primary-green);
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .action-item {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1em;
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 2px solid rgba(0, 255, 65, 0.3);
+            padding-left: 15px;
+            transition: all 0.2s;
+        }
+
+        .action-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-left-color: var(--primary-green);
+            padding-left: 20px;
+        }
+
+        /* Performance metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--panel-border);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            transform: scaleX(0);
+            transition: transform 0.5s;
+        }
+
+        .metric-box:hover::before {
+            transform: scaleX(1);
+        }
+
+        .metric-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8em;
+            color: var(--secondary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--primary-green);
+            text-shadow: 0 0 10px var(--glow-green);
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4em;
+            color: var(--secondary-cyan);
+            letter-spacing: 3px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Corner decorations */
+        .corner-deco {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--primary-green);
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .corner-deco.top-left {
+            top: 10px;
+            left: 10px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-deco.top-right {
+            top: 10px;
+            right: 10px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-deco.bottom-left {
+            bottom: 10px;
+            left: 10px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-deco.bottom-right {
+            bottom: 10px;
+            right: 10px;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .tactical-map {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background effects -->
+    <div class="grid-bg"></div>
+    <div class="scanline"></div>
+    
+    <!-- Corner decorations -->
+    <div class="corner-deco top-left"></div>
+    <div class="corner-deco top-right"></div>
+    <div class="corner-deco bottom-left"></div>
+    <div class="corner-deco bottom-right"></div>
+
+    <div class="container">
+        <!-- Top Header -->
+        <div class="top-header">
+            <div class="title-section">
+                <h1>MD-ADSS</h1>
+                <div class="subtitle">Multi-Domain Adversarial Decision Support System</div>
+            </div>
+            <div class="status-indicators">
+                <div class="status-box">
+                    <div class="status-label">System Status</div>
+                    <div class="status-value active">ACTIVE</div>
+                </div>
+                <div class="status-box">
+                    <div class="status-label">Threat Level</div>
+                    <div class="status-value" style="color: var(--warning-amber)">MODERATE</div>
+                </div>
+                <div class="status-box">
+                    <div class="status-label">Response Time</div>
+                    <div class="status-value" style="color: var(--secondary-cyan)">1.2s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Left Panel: Threat Analysis -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Threat Matrix</div>
+                    <div class="panel-code">[TM-001]</div>
+                </div>
+                <div class="threat-matrix" id="threatMatrix">
+                    <div class="threat-item">
+                        <div class="threat-level">PRIORITY HIGH</div>
+                        <div class="threat-desc">Enemy Tank Division</div>
+                        <div class="threat-distance">Distance: 2.4 km</div>
+                    </div>
+                    <div class="threat-item">
+                        <div class="threat-level">PRIORITY MEDIUM</div>
+                        <div class="threat-desc">Infantry Squad</div>
+                        <div class="threat-distance">Distance: 3.8 km</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Tactical Map -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Tactical Battlefield</div>
+                    <div class="panel-code">[MAP-GRID-A7]</div>
+                </div>
+                <div class="tactical-map">
+                    <div class="radar-overlay"></div>
+                    <canvas id="tacticalCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Panel: Unit Status -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Unit Status</div>
+                    <div class="panel-code">[US-002]</div>
+                </div>
+                <div class="unit-grid" id="unitGrid">
+                    <div class="unit-card">
+                        <div class="unit-info">
+                            <h4>TANK-001</h4>
+                            <div class="unit-stats">
+                                <div class="stat">
+                                    <div class="stat-icon health"></div>
+                                    <span>100%</span>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-icon fuel"></div>
+                                    <span>80%</span>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-icon ammo"></div>
+                                    <span>50%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unit-card">
+                        <div class="unit-info">
+                            <h4>TANK-002</h4>
+                            <div class="unit-stats">
+                                <div class="stat">
+                                    <div class="stat-icon health"></div>
+                                    <span>100%</span>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-icon fuel"></div>
+                                    <span>75%</span>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-icon ammo"></div>
+                                    <span>45%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scenario Selection -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Mission Scenarios</div>
+                    <div class="panel-code">[SC-SELECT]</div>
+                </div>
+                <div class="scenario-grid">
+                    <button class="scenario-btn active" data-domain="ground" data-scenario="defensive">
+                        🛡️ GROUND DEFENSE
+                    </button>
+                    <button class="scenario-btn" data-domain="ground" data-scenario="assault">
+                        ⚔️ GROUND ASSAULT
+                    </button>
+                    <button class="scenario-btn" data-domain="air" data-scenario="intercept">
+                        ✈️ AIR INTERCEPT
+                    </button>
+                    <button class="scenario-btn" data-domain="air" data-scenario="dogfight">
+                        🎯 AIR COMBAT
+                    </button>
+                    <button class="scenario-btn" data-domain="naval" data-scenario="patrol">
+                        ⚓ NAVAL PATROL
+                    </button>
+                    <button class="scenario-btn" data-domain="naval" data-scenario="carrier">
+                        🚢 CARRIER DEFENSE
+                    </button>
+                </div>
+                <button class="analyze-btn" id="analyzeBtn">
+                    <span style="position: relative; z-index: 1;">▶ INITIATE ANALYSIS</span>
+                </button>
+            </div>
+
+            <!-- Resources Panel -->
+            <div class="panel" style="grid-column: 2 / 4;">
+                <div class="panel-header">
+                    <div class="panel-title">Resource Status</div>
+                    <div class="panel-code">[RES-MON]</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Fuel Reserve</div>
+                        <div class="metric-value" id="fuelValue">500</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Ammunition</div>
+                        <div class="metric-value" id="ammoValue">300</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Friendly Units</div>
+                        <div class="metric-value" id="friendlyValue">2</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Enemy Units</div>
+                        <div class="metric-value" id="enemyValue" style="color: var(--danger-red)">2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div class="panel recommendations">
+            <div class="panel-header">
+                <div class="panel-title">Tactical Recommendations</div>
+                <div class="panel-code">[AI-ANALYSIS]</div>
+            </div>
+            <div id="recommendationsContainer">
+                <div class="loading">AWAITING TACTICAL ANALYSIS</div>
+            </div>
+            
+            <div class="metrics-grid" id="performanceMetrics" style="display: none;">
+                <div class="metric-box">
+                    <div class="metric-label">BFS Nodes</div>
+                    <div class="metric-value" id="bfsNodes">-</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">A* Nodes</div>
+                    <div class="metric-value" id="astarNodes">-</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Minimax Nodes</div>
+                    <div class="metric-value" id="minimaxNodes">-</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Alpha-Beta Nodes</div>
+                    <div class="metric-value" id="alphabetaNodes">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const API_URL = "http://127.0.0.1:5000/analyze";
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const responseTimeEl = document.querySelectorAll(".status-value")[2];
+
+    const canvas = document.getElementById("tacticalCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let sweepAngle = 0;
+    let selectedScenario = "defensive";
+
+    // ================================
+    // SCENARIO BUTTONS
+    // ================================
+    document.querySelectorAll(".scenario-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".scenario-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            selectedScenario = btn.dataset.scenario;
+        });
+    });
+
+    // ================================
+    // RADAR SYSTEM
+    // ================================
+    function initializeRadar() {
+        const size = 500;
+        canvas.width = size;
+        canvas.height = size;
+
+        // Background
+        ctx.fillStyle = "#001100";
+        ctx.fillRect(0, 0, size, size);
+
+        // Static rings
+        ctx.strokeStyle = "rgba(0,255,65,0.3)";
+        ctx.lineWidth = 1;
+
+        const center = size / 2;
+        [0.2, 0.4, 0.6, 0.8].forEach(scale => {
+            ctx.beginPath();
+            ctx.arc(center, center, center * scale, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+    }
+
+    function drawRadarSweep() {
+        const size = canvas.width;
+        const center = size / 2;
+        const radius = center * 0.9;
+
+        // Fade for trail effect
+        ctx.fillStyle = "rgba(0, 20, 0, 0.08)";
+        ctx.fillRect(0, 0, size, size);
+
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(sweepAngle);
+
+        const gradient = ctx.createLinearGradient(0, 0, radius, 0);
+        gradient.addColorStop(0, "rgba(0,255,65,0.8)");
+        gradient.addColorStop(1, "rgba(0,255,65,0)");
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(radius, 0);
+        ctx.stroke();
+
+        ctx.restore();
+
+        sweepAngle += 0.02;
+    }
+
+    function animateRadar() {
+        drawRadarSweep();
+        requestAnimationFrame(animateRadar);
+    }
+
+    initializeRadar();
+    animateRadar();
+
+    // ================================
+    // ANALYZE BUTTON
+    // ================================
+    analyzeBtn.addEventListener("click", async () => {
+
+        const container = document.getElementById("recommendationsContainer");
+        container.innerHTML = '<div class="loading">PROCESSING TACTICAL DATA</div>';
+        document.getElementById("performanceMetrics").style.display = "none";
+
+        const startTime = performance.now();
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scenario: selectedScenario })
+            });
+
+            if (!response.ok) throw new Error("Server error");
+
+            const result = await response.json();
+
+            const endTime = performance.now();
+            const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+            responseTimeEl.textContent = `${elapsed}s`;
+
+            renderRecommendations(result.recommendations || []);
+            renderStats(result.stats || {});
+
+        } catch (error) {
+            container.innerHTML = `
+                <div class="loading" style="color:#ff0033">
+                    BACKEND OFFLINE OR ERROR
+                </div>
+            `;
+            console.error(error);
+        }
+    });
+
+    // ================================
+    // RENDER RECOMMENDATIONS
+    // ================================
+    function renderRecommendations(recommendations) {
+
+        const container = document.getElementById("recommendationsContainer");
+
+        if (!recommendations.length) {
+            container.innerHTML = `<div class="loading">NO VALID ACTIONS</div>`;
+            return;
+        }
+
+        container.innerHTML = recommendations.map(rec => {
+
+            const utility = Number(rec.utility || 0).toFixed(2);
+            const risk = Number(rec.risk_score || 0).toFixed(2);
+
+            let riskClass = "risk-low";
+            if (risk > 50) riskClass = "risk-high";
+            else if (risk > 20) riskClass = "risk-medium";
+
+            const explanation = rec.explanation || {};
+
+            return `
+                <div class="rec-card">
+                    <div class="rec-header">
+                        <div class="rec-rank">${rec.rank || 1}</div>
+                        <div class="rec-title">BEST ACTION PLAN</div>
+                        <div class="rec-utility">UTILITY: ${utility}</div>
+                    </div>
+
+                    <div class="rec-meta">
+                        <span class="meta-badge algorithm">ALPHA-BETA</span>
+                        <span class="meta-badge ${riskClass}">RISK: ${risk}</span>
+                    </div>
+
+                    <div class="actions-list">
+                        ${(rec.actions || []).map((a,i)=>
+                            `<div class="action-item">${i+1}. ${a}</div>`
+                        ).join("")}
+                    </div>
+
+                    <div style="margin-top:15px; font-size:0.9em; color:#ccc;">
+                        <strong>Expected Gain:</strong> ${explanation.expected_gain || 0}<br>
+                        <strong>Worst Case:</strong> ${explanation.worst_case || 0}<br>
+                        <strong>Fuel Remaining:</strong> ${explanation.fuel_remaining || 0}<br>
+                        <strong>Enemy Health After:</strong> ${explanation.enemy_health_after || 0}
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        document.getElementById("performanceMetrics").style.display = "grid";
+    }
+
+    // ================================
+    // RENDER STATS
+    // ================================
+    function renderStats(stats) {
+        document.getElementById("bfsNodes").textContent =
+            stats?.bfs?.nodes_expanded ?? 0;
+
+        document.getElementById("astarNodes").textContent =
+            stats?.astar?.nodes_expanded ?? 0;
+
+        document.getElementById("minimaxNodes").textContent =
+            stats?.minimax?.nodes_expanded ?? 0;
+
+        document.getElementById("alphabetaNodes").textContent =
+            stats?.alphabeta?.nodes_expanded ?? 0;
+    }
+
+});
+</script>
+</body>
+</html>
+
